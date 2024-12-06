@@ -169,7 +169,7 @@ classdef setTargetInteractive < handle
             end
 
             %% UIFigure and UIAxes
-            obj.fig = uifigure('Position',[500 500 500 275]*2);        
+            obj.fig = uifigure('Position',[10 10 500 275]*2);        
             obj.ax = uiaxes(obj.fig, "Position",[150, 10, 340, 255]*2);
 
             obj.updatePlot(1,0)
