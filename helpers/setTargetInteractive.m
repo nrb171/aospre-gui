@@ -262,6 +262,7 @@ classdef setTargetInteractive < handle
     end
     %% GUI draw constructor
     methods (Access = public)
+        % TODO #1 refactor this to match FlightPlanner constructor.
         function obj = setTargetInteractive(environment)
             obj.environment = environment;
             obj = obj.createComponents();
