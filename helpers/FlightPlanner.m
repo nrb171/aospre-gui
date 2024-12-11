@@ -39,10 +39,8 @@ classdef FlightPlanner < handle
 
     end
 
-    %% properties for UIFigure
-    properties (Access = public)
-        fig
-        ax
+    %% private properties for UIFigure
+    properties (Access = private)
 
         % training/init options
         startPointBtn
@@ -63,24 +61,36 @@ classdef FlightPlanner < handle
         % start line/point
         startLine
 
+        %done/finalize button
+        finalizeBtn
+        doneBtn
+
 
 
     end
 
+    %% public properties for UIFigure
+    properties (Access = public)
+        % figure and plotted axes
+        fig
+        ax
+
+        % Selectable rois
+        paths   % cell array of roi objects.
+        bestPath % best path (polyline)
+    end
+
+    %% misc. properties
     properties (Access = private)
         g = 9.81            % gravity constant
         searchExtender = 5  % multiplier for search length
         loopNumber = 0      % number of loops
         nodesInPath
-        
-
-        
-        
     end
     
     %% Private methods for model training.
     methods (Access = private)
-         function [costs,heading,targetsObserved] = costOfLegs(obj, oldWaypointIDs, newWaypointIDs)
+        function [costs,heading,targetsObserved] = costOfLegs(obj, oldWaypointIDs, newWaypointIDs)
                 % loop through each possible node and calculate the cost of the leg
                 %obj.Targets.dwellTime, observedTime, weight
                 % distance from target
@@ -254,6 +264,7 @@ classdef FlightPlanner < handle
             newGrandparentID = obj.flights.Nodes(oldEdgeID,:).parent;
             if ~isempty(oldEdgeID)
                 obj.flights = rmedge(obj.flights, oldEdgeID);
+               
             end
 
             % add new edge
@@ -279,16 +290,17 @@ classdef FlightPlanner < handle
                 distanceOfNewEdge = sqrt(...
                     (obj.flights.Nodes(newChildID,:).row - obj.flights.Nodes(pathToOrigin(end-1),:).row)^2 + ...
                     (obj.flights.Nodes(newChildID,:).col - obj.flights.Nodes(pathToOrigin(end-1),:).col)^2) * obj.Environment.resolution;
+                obj.flights.Nodes(newChildID,:).totalDistance = ...
+                    obj.flights.Nodes(pathToOrigin(end-1),:).totalDistance + distanceOfNewEdge;
+    
+                % calculate total elapsed time
+                obj.flights.Nodes(newChildID,:).elapsedTime = ...
+                    obj.flights.Nodes(pathToOrigin(end - 1),:).totalDistance/obj.Aircraft.speed + distanceOfNewEdge/obj.Aircraft.speed;
             catch ME
-
+                
             end
-        
-            obj.flights.Nodes(newChildID,:).totalDistance = ...
-                obj.flights.Nodes(pathToOrigin(end-1),:).totalDistance + distanceOfNewEdge;
-
-            % calculate total elapsed time
-            obj.flights.Nodes(newChildID,:).elapsedTime = ...
-                obj.flights.Nodes(pathToOrigin(end - 1),:).totalDistance/obj.Aircraft.speed + distanceOfNewEdge/obj.Aircraft.speed;
+            
+           
             
             % calculate target observed time
             for iff = 1:numel(targetsObserved)
@@ -821,7 +833,10 @@ classdef FlightPlanner < handle
 
             startLoop = obj.loopNumber;
             for i = startLoop:obj.TrainingOptions.nLoops
+                obj.finalizeBtn.BackgroundColor = [1, 0.5, 0.5];
+                obj.doneBtn.BackgroundColor = [1, 0.5, 0.5];
                 obj = addPath(obj);
+
 
                 if any(round(obj.TrainingOptions.nLoops*obj.TrainingOptions.trimStart):obj.TrainingOptions.trimRate:obj.TrainingOptions.nLoops == i)
                     obj = trimNetwork(obj);
@@ -872,36 +887,14 @@ classdef FlightPlanner < handle
             for i = 2:height(obj.flights.Nodes)
                 costOfLeg(i) = distances(obj.flights, predecessors(obj.flights, i), i);
             end
-            plot(ax,obj.flights, 'XData', xy1(:,1), 'YData', xy1(:,2), 'NodeLabel', {}, 'EdgeAlpha', 0.1, 'NodeColor', 'blue', 'MarkerSize', (costOfLeg-min(costOfLeg)+0.01)/10);
+            plot(ax, obj.flights, 'XData', xy1(:,1), 'YData', xy1(:,2), 'NodeLabel', {}, 'EdgeAlpha', 0.1, 'NodeColor', 'blue', 'MarkerSize', (costOfLeg-min(costOfLeg)+0.01)/10);
             daspect(ax, [1,1,1])
 
-            %% plot 5 shortest paths
-            start = 1;
             
-            totalTimeElapsed  =  obj.TrainingOptions.desiredPathLength; %seconds since start (controls length of leg)
-            
-            roots = find(obj.flights.Nodes.elapsedTime > totalTimeElapsed*3600);
-            if isempty(roots)
-                totalTimeElapsed  =  0; %seconds since start (controls length of leg)
-                roots = find(obj.flights.Nodes.elapsedTime > totalTimeElapsed);
-            end
-            G = obj.flights;
-            
-            d = distances(G,1); %distances from start to all nodes.
-            for i = 1:numel(roots)
-                [p, ~] = shortestpath(obj.flights, start, roots(i));
-                pathLengths(i) = prctile(gradient(d(p)), 50);
-            end
-            
-            [~, idx] = sort(pathLengths, 'ascend');
-            for i = 1:min(10, numel(idx))
-                path = shortestpath(obj.flights, start, roots(idx(i)));
-                xy = [obj.flights.Nodes.col(path), obj.flights.Nodes.row(path)];
-                plot(ax, xy(:,1), xy(:,2), 'Color', [1,0.8,0.5], 'LineWidth', 2);
-            end
             
 
             if isa(obj.fig, 'matlab.ui.Figure')
+                obj = obj.getBestPaths();
                 obj.ax = ax;
             else
                 print2(fig, p.Results.SaveLocation);
@@ -949,17 +942,18 @@ classdef FlightPlanner < handle
             %     'Text', 'Set initial position', ...
             %     'Tooltip', "Set/reset start position", ...
             %     'Position', [150, 200, 100, 25]);
-            doneBtn = uibutton(obj.fig, ...
+            obj.doneBtn = uibutton(obj.fig, ...
                 "ButtonPushedFcn", @(src,event) close(obj.fig), ...
                 'Text', 'Done/Exit', ...
                 'Tooltip', "Close the GUI.", ...
-                'Position', [30, 200, 100, 25], ...
+                'Position', [30, 50, 100, 25], ...
                 'BackgroundColor', [1 0.5 0.5]);
-            % finalizeBtn = uibutton(obj.fig, ...
-            %     "ButtonPushedFcn", @(src,event) obj.finalizeTarget(), ...
-            %     'Text', 'Finalize Target', ...
-            %     'Tooltip',"Select desired flight path and prepare export to AOSPRE-GUI.", ...
-            %     'Position', [150, 250, 100, 25]); 
+            obj.finalizeBtn = uibutton(obj.fig, ...
+                "ButtonPushedFcn", @(src,event) obj.finalizePath(), ...
+                'Text', 'Finalize Path', ...
+                'Tooltip',"Click on the path you want to export to AOSPRE, then click this button. You will be able to edit this path later, if you choose.", ...
+                'Position', [180, 50, 100, 25], ...
+                'BackgroundColor', [1 0.5 0.5]); 
                 
             obj.desiredPathLengthEF = uieditfield(obj.fig, 'numeric', ...
                 "Limits",[0, 1000], ...
@@ -1025,7 +1019,7 @@ classdef FlightPlanner < handle
             
             %% Progress bar initialization
             obj.progressBarAxes = uiaxes(obj.fig, ...
-                'Position', [30, 50, 200, 25], ...
+                'Position', [30, 10, 200, 25], ...
                 'Visible', 'off', ...
                 'XLim',[0,1], ...
                 'YLim',[0,1], ...
@@ -1081,6 +1075,97 @@ classdef FlightPlanner < handle
                 obj.progressBarText.Text = string(percent*100) + "%";
                 drawnow limitrate
             end
+        end
+        function obj = getBestPaths(obj)
+            %% calculate the best paths from the graph and draw as a polyline on obj.ax
+            obj.paths = {};
+
+            %% plot 5 shortest paths
+            start = 1;
+
+            % can use max flow..
+            % can use shortest path..
+
+            ce = centrality(obj.flights, 'outdegree');
+            
+           
+            roots = find(ce == 0);
+            d = distances(obj.flights,1); %distances from start to all nodes.
+            for i = 1:numel(roots)
+                [p, ~] = shortestpath(obj.flights, start, roots(i));
+                pathLengths(i) = prctile(gradient(d(p)), 25);
+            end
+
+            [~, idx] = sort(pathLengths, 'ascend');
+            nodesVisited = [1];
+            numPaths = 0;
+            i=1;
+            while numPaths < 5
+                path = shortestpath(obj.flights, start, roots(idx(i)));
+                if nnz(ismember(path, nodesVisited)) < numel(path)*0.5
+                    
+                    nodesVisited = [nodesVisited(:); path(:)];
+                    nodesVisited = unique(nodesVisited);
+                    xy = [obj.flights.Nodes.col(path), obj.flights.Nodes.row(path)];
+                    xy = reducepoly(xy, 0.035);
+
+                    obj.paths{end+1} = images.roi.Polyline(obj.ax, ...
+                    'Position', xy, ...
+                    'SelectedColor', [0.5,1,0.5]);
+                    
+                    addlistener(obj.paths{end}, 'ROIClicked', @(~,~) obj.polylineCallback());
+
+                    numPaths = numPaths + 1;
+                end
+                i = i+1;
+            end 
+
+
+            
+            %  totalTimeElapsed  =  obj.TrainingOptions.desiredPathLength; %seconds since start (controls length of leg)
+             
+            %  roots = find(obj.flights.Nodes.elapsedTime > totalTimeElapsed*3600);
+            %  if isempty(roots)
+            %      totalTimeElapsed  =  0; %seconds since start (controls length of leg)
+            %      roots = find(obj.flights.Nodes.elapsedTime > totalTimeElapsed);
+            %  end
+            %  G = obj.flights;
+             
+            %  d = distances(G,1); %distances from start to all nodes.
+            %  for i = 1:numel(roots)
+            %      [p, ~] = shortestpath(obj.flights, start, roots(i));
+            %      pathLengths(i) = prctile(gradient(d(p)), 50);
+            %  end
+             
+            %  [~, idx] = sort(pathLengths, 'ascend');
+            %  for i = 1:min(10, numel(idx))
+            %      path = shortestpath(obj.flights, start, roots(idx(i)));
+            %      xy = [obj.flights.Nodes.col(path), obj.flights.Nodes.row(path)];
+            %      plot(ax, xy(:,1), xy(:,2), 'Color', [1,0.8,0.5], 'LineWidth', 2);
+            %  end
+
+        end
+
+        function obj = polylineCallback(obj)
+            obj.finalizeBtn.BackgroundColor = [0.5, 1, 0.5];
+        end
+
+        function obj = finalizePath(obj)
+            %%! TEST!
+            % find the path that the user has selected and save to bestPath
+            for indBest = 1:numel(obj.paths)
+                if obj.paths{indBest}.Selected == 1
+                    break
+                end
+
+            end
+            obj.bestPath = obj.paths{indBest};
+
+            % remove parent so that the path is not deleted when figure is closed.
+            obj.bestPath.Parent = [];
+
+            % set done button to green
+            obj.doneBtn.BackgroundColor = [0.5, 1, 0.5];
         end
     end
 
