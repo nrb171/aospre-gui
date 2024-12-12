@@ -10,7 +10,7 @@ classdef FlightPlanner < handle
         searchLength = 120*120          % length of search (meters)
         Aircraft = struct(...           % Aircraft structure (speed, maxRoll, maxTurbulence, Radars)
             'speed', 120, ...               % m/s
-            'maxRoll', pi/3, ...            % degrees
+            'maxRoll', pi/4, ...            % radians
             'maxTurbulence', 3, ...         % (m/s) range of vertical velocity over time
             'Radars', struct(...            % radar objects
                 'lhs', 90, 'rhs', -90), ...   
@@ -18,23 +18,24 @@ classdef FlightPlanner < handle
             'distanceForgiveness', 4000, ...% meters from target
             'maxDistance', 45000)        % meters from target
         Costs = struct(...              % cost structure
-                'headingOffset', 3, ...     % cost of aircraft turning
-                'turbulence', 5, ...        % cost of turbulence
-                'base', 16, ...             % cost of heading offset and turbulence
-                'lengthDiscount', 5)        % discount for long legs         
+            'headingOffset', 5, ...         % cost of aircraft turning
+            'turbulence', 5, ...            % cost of turbulence
+            'base', 16, ...                 % cost of heading offset and turbulence
+            'lengthDiscount', 5)            % discount for long legs         
         TrainingOptions = struct(...    % training options
             'learningRate', 0.008, ...      % rate of learning for valid mask
             'nLoops', 100, ...              % number of loops
             'nParallel', 100, ...           % number of sibling paths to calculate before updating the valid mask
-            'trimStart', 0.3, ...           % fraction of iterations of nParallel to wait before trimming
+            'trimStart', 0.6, ...           % fraction of iterations of nParallel to wait before trimming
             'trimRate', 4, ...              % rate to trim lowest percentile of trees after trimStart
-            'trimAggression', 50, ...       % highest percentile quality of trees to keep
+            'trimAggression', 65, ...       % highest percentile quality of trees to keep
             'trimLearningRate', 0, ...      % rate that percentile of triming goes up (per loop above trimStart)
             'trimLength', 1, ...            % minimum length of bad trees to cut
             'desiredPathLength', 1, ...     % desired path length (hours)
             'condensationRate', 10, ...     % rate to condense network
             'condensationRadius', 4)        % radius to perform search (pixels)
         validMask                       % weighted mask of valid locations in the environment
+        priorPath = [];
     end
 
     %% private properties for UIFigure
@@ -71,8 +72,10 @@ classdef FlightPlanner < handle
         ax
 
         % Selectable rois
-        paths   % cell array of roi objects.
-        bestPath % best path (polyline)
+        paths       % cell array of roi objects.
+        flightPath = struct(...
+            'roi',[], ...
+            'path',[])         % best path (polyline)
     end
 
     %% misc. properties
@@ -433,36 +436,37 @@ classdef FlightPlanner < handle
 
         function obj = updateValidMask(obj)
             %% update the valid mask based on the current location of the aircraft
-
-            % new method
-            % find all edges less than zero
-            edges = find(obj.flights.Edges.Weight < min(prctile(obj.flights.Edges.Weight, 5), obj.Costs.base));
-            parents = obj.flights.Edges.EndNodes(edges,1);
-            children = obj.flights.Edges.EndNodes(edges,2);
-            parentRows = obj.flights.Nodes.row(parents);
-            parentCols = obj.flights.Nodes.col(parents);
-            childRows = obj.flights.Nodes.row(children);
-            childCols = obj.flights.Nodes.col(children);
-
-            meanRows = round(mean([parentRows, childRows],2));
-            meanCols = round(mean([parentCols, childCols],2));
-            meanInds = sub2ind(size(obj.Environment.w), meanRows, meanCols);
-
-            maskTemp = zeros(size(obj.Environment.w));
-            maskTemp(meanInds) = 1;     
-            maskTemp = double(maskTemp);
-            theGreatEqualizer = imfilter((maskTemp), double(fspecial('disk', round(2*obj.searchLength/obj.Environment.resolution))>0))>0;
-
-            % apply a gaussian filter to the mask
-            obj.validMask = single(ones(size(obj.Environment.w)))*0.5;
-            obj.validMask(~theGreatEqualizer) = 0.5-obj.TrainingOptions.learningRate*obj.loopNumber;
-            
-            if max(obj.validMask(:)) > 1
-                adjustmentFactor = max(obj.validMask(:))-1;
-                obj.validMask = obj.validMask - adjustmentFactor;
+            if height(obj.flights.Nodes > 15)
+                % new method
+                % find all edges less than zero
+                edges = find(obj.flights.Edges.Weight < min(prctile(obj.flights.Edges.Weight, 5), obj.Costs.base));
+                parents = obj.flights.Edges.EndNodes(edges,1);
+                children = obj.flights.Edges.EndNodes(edges,2);
+                parentRows = obj.flights.Nodes.row(parents);
+                parentCols = obj.flights.Nodes.col(parents);
+                childRows = obj.flights.Nodes.row(children);
+                childCols = obj.flights.Nodes.col(children);
+    
+                meanRows = round(mean([parentRows, childRows],2));
+                meanCols = round(mean([parentCols, childCols],2));
+                meanInds = sub2ind(size(obj.Environment.w), meanRows, meanCols);
+    
+                maskTemp = zeros(size(obj.Environment.w));
+                maskTemp(meanInds) = 1;     
+                maskTemp = double(maskTemp);
+                theGreatEqualizer = imfilter((maskTemp), double(fspecial('disk', round(2*obj.searchLength/obj.Environment.resolution))>0))>0;
+    
+                % apply a gaussian filter to the mask
+                obj.validMask = single(ones(size(obj.Environment.w)))*0.5;
+                obj.validMask(~theGreatEqualizer) = 0.5-obj.TrainingOptions.learningRate*obj.loopNumber;
+                
+                if max(obj.validMask(:)) > 1
+                    adjustmentFactor = max(obj.validMask(:))-1;
+                    obj.validMask = obj.validMask - adjustmentFactor;
+                end
+    
+                obj.validMask(obj.validMask < 0) = 0.0001;
             end
-
-            obj.validMask(obj.validMask < 0) = 0.0001;
         end % updateValidMask
 
 
@@ -692,21 +696,49 @@ classdef FlightPlanner < handle
                 ax = axes(fig);
                 
             end
+            % plot quality contours and targets
             hold(ax, 'off');
             contour(ax, obj.validMask, 1, 'LineColor', 'r');
             hold(ax, 'on');
             contour(ax, obj.Targets.map, 1, 'LineColor', 'magenta');
-            xy1 = [obj.flights.Nodes.col, obj.flights.Nodes.row];
-           
-            costOfLeg = 1;
-            for i = 2:height(obj.flights.Nodes)
-                costOfLeg(i) = distances(obj.flights, predecessors(obj.flights, i), i);
+
+            % plot prior path
+            if ~isempty(obj.priorPath)
+                plot(ax, obj.priorPath(:,1), obj.priorPath(:,2))
             end
-            plot(ax, obj.flights, 'XData', xy1(:,1), 'YData', xy1(:,2), 'NodeLabel', {}, 'EdgeAlpha', 0.1, 'NodeColor', 'blue', 'MarkerSize', (costOfLeg-min(costOfLeg)+0.01)/10);
+
+            % plot starting line
+            try
+                quiver(obj.ax, ...
+                        obj.startLine.Position(1,1), obj.startLine.Position(1,2), ...
+                        obj.startLine.Position(2,1) - obj.startLine.Position(1,1), ...
+                        obj.startLine.Position(2,2) - obj.startLine.Position(1,2), ...
+                        'Color', 'red', 'LineWidth', 2);
+            end
+
+            % plot network
+            try
+                xy1 = [obj.flights.Nodes.col, obj.flights.Nodes.row];
+               
+                costOfLeg = 1;
+                for i = 2:height(obj.flights.Nodes)
+                    costOfLeg(i) = distances(obj.flights, predecessors(obj.flights, i), i);
+                end
+                plot(ax, obj.flights, 'XData', xy1(:,1), 'YData', xy1(:,2), 'NodeLabel', {}, 'EdgeAlpha', 0.1, 'NodeColor', 'blue', 'MarkerSize', (costOfLeg-min(costOfLeg)+0.01)/10);
+            catch
+                fprintf('error in plotNetwork')
+            end
+
+            try 
+                obj = obj.getBestPaths();
+            catch
+                fprintf('error in getBestPaths')
+            end
             daspect(ax, [1,1,1])
+            xlim(ax, [1, size(obj.Targets.map,2)])
+            ylim(ax, [1, size(obj.Targets.map,1)])
 
             if isa(obj.fig, 'matlab.ui.Figure')
-                obj = obj.getBestPaths();
                 obj.ax = ax;
             else
                 print2(fig, p.Results.SaveLocation);
@@ -718,16 +750,26 @@ classdef FlightPlanner < handle
     %% methods for GUI
     methods (Access = private)
         function obj = drawStart(obj, option)
-            if strcmp(option, 'set')
-                obj.refreshFigure()
+            if strcmp(option, 'set') & isempty(obj.priorPath)
+                obj.plotNetwork()
                 obj.startLine = drawline(obj.ax);
+                uiwait(obj.fig)
+
+            elseif strcmp(option, 'set') & ~isempty(obj.priorPath)
+                obj.plotNetwork()
+                obj.startLine = images.roi.Line;
+                obj.startLine.Parent = obj.ax;
+
+                beginDrawingFromPoint(obj.startLine, [obj.priorPath(end,1), obj.priorPath(end,2)]);
+                uiwait(obj.fig)
+
                 
             elseif strcmp(option, 'finalize')
                 obj.initializeFlight([obj.startLine.Position(1,2), obj.startLine.Position(1,1)], atan2d(obj.startLine.Position(2,2) - obj.startLine.Position(1,2), obj.startLine.Position(2,1) - obj.startLine.Position(1,1)));
                 obj.validMask = single(ones(size(obj.Environment.w))*0.5);
                 obj.startLine.Parent = [];
                 obj.loopNumber = 1;
-                obj.refreshFigure();
+                obj.plotNetwork()
 
             end
 
@@ -895,14 +937,14 @@ classdef FlightPlanner < handle
             d = distances(obj.flights,1); %distances from start to all nodes.
             for i = 1:numel(roots)
                 [p, ~] = shortestpath(obj.flights, start, roots(i));
-                pathLengths(i) = prctile(gradient(d(p)), 25);
+                pathLengths(i) = prctile(gradient(d(p)), 70);
             end
 
             [~, idx] = sort(pathLengths, 'ascend');
             nodesVisited = [1];
             numPaths = 0;
             i=1;
-            while numPaths < 5
+            while numPaths < 5 | i > numel(idx)
                 path = shortestpath(obj.flights, start, roots(idx(i)));
                 if nnz(ismember(path, nodesVisited)) < numel(path)*0.5
                     
@@ -935,10 +977,10 @@ classdef FlightPlanner < handle
                 end
 
             end
-            obj.bestPath = obj.paths{indBest};
+            obj.flightPath.roi = obj.paths{indBest};
 
             % remove parent so that the path is not deleted when figure is closed.
-            obj.bestPath.Parent = [];
+            obj.flightPath.roi.Parent = [];
 
             % set done button to green
             obj.doneBtn.BackgroundColor = [0.5, 1, 0.5];
@@ -949,7 +991,7 @@ classdef FlightPlanner < handle
     methods (Access = public)
         function obj = drawGui(obj)
             obj.createComponents();
-            obj.refreshFigure();
+            obj.plotNetwork()
         end % drawGui
     end
 end
