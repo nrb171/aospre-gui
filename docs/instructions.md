@@ -6,9 +6,9 @@ The following instructions will guide you through the various processes of AOSPR
 1. [Selecting a simulation](#data-selection)
 2. [Data visualizing](#data-visualization)
 3. [Flight planning](#flight-planning)
-4. [AOSPRE setup](#aospre-setup)
-5. [Advanced settings](#advanced-settings) 
-6. [Running AOSPRE](#running-aospre)
+4. [AOSPRE details](#aospre-setup)
+5. [Running AOSPRE](#running-aospre)
+6. [Advanced settings](#advanced-settings) 
 
 # Running AOSPRE-GUI
 To run AOSPRE-GUI, navigate to the `aospre-gui` directory in your terminal and run the following command:
@@ -19,41 +19,42 @@ matlab -r "run('AOSPRE_GUI.mlapp')"
 You may also run the `AOSPRE_GUI.mlapp` file directly from the MATLAB GUI by navigating to the aospre-gui directory and double-clicking the file.
 
 # Data selection
-## 1. Data preprocessing
+## Data preprocessing
 To ensure compatibility with AOSPRE, you must preprocess the simulations you wish to use by renaming the simulation's output files to elapsed seconds (e.g., `wrfout_0015500s.nc` where there has been 0015500 seconds since the start of the simulation). 
 
 The python script [`wrfoutToAOSPRE.py`](../helpers/wrfoutToAOSPRE.py) has been provided for the user as a template in cases where the data is not in the default `wrfout_d0X_YYYY-MM-DD_HH:MM:SS` format. If your data is in this format, you can move to the next section and the GUI will automatically rename the files for you.
 
-## 2. Selecting the data
-1. The first step in using AOSPRE-GUI is to select the data you want to use for your simulation. You can do this by manually typing the path to the data ([A1]()) or by using the file browser to navigate to the data ([A2]()). If the software detects data saved in an incorrect format, it will prompt you to automatically rename the files, simply press "Yes". Note: this process assumes that the filenames are in the default `wrfout_d0X_YYYY-MM-DD_HH:MM:SS` format.
+## Selecting the data
+- The first step in using AOSPRE-GUI is to select the data you want to use for your simulation. You can do this by manually typing the path to the data ([ File Search Pattern (A1)]()) or by using the file browser to navigate to the data ([A2]()). If the software detects data saved in an incorrect format, it will prompt you to automatically rename the files, simply press "Yes". Note: this process assumes that the filenames are in the default `wrfout_d0X_YYYY-MM-DD_HH:MM:SS` format.
 
 ![](../docs/images/data-selection.png) 
 
-2. The software will try to guess the resolution of the data based on the `XLAT` and `XLONG` variables in the data, check to make sure this is correct. You can manually correct the resolution in [A3]() if necessary.
-3. If everything proceeds without error, you can move to the [next section](#data-visualization).
+- The software will try to guess the resolution of the data based on the `XLAT` and `XLONG` variables in the data, check to make sure this is correct. You can manually correct the resolution in [Sim. Resolution (m) (A3)]() if necessary.
+- If everything proceeds without error, you can move to the [next section](#data-visualization).
 
-4. However, if there is an error selecting or preprocessing the data, you will see a message in [A5]() that will guide you on how to proceed.
+- However, if there is an error selecting or preprocessing the data, you will see a message in [A5]() that will guide you on how to proceed.
 
-4. Lastly, you may manually set the format for for the time search pattern in the filenames. The default should be correct for most users, but if you have a different format, you can set it in [A4](). The `?` character is a wildcard that will match any character, then set the `s` character at locations in the filename string that corresponds to the elapsed seconds. For example, the image above reflects a filename of `wrfout_0015500s.nc`.
+- Lastly, you may manually set the format for for the time search pattern in the filenames. The default should be correct for most users, but if you have a different format, you can set it in [File Time Pattern (A4)](). The `?` character is a wildcard that will match any character, then set the `s` character at locations in the filename string that corresponds to the elapsed seconds. For example, the image above reflects a filename of `wrfout_0015500s.nc`.
 
 # Data visualization
 A simple plotting tool is provided that allows the user to visualize the data and flight paths at the same time. 
 ![](./images/data-visualization.png)
 - [B1](./images/data-visualization.png) shows the selected variable (yellow to blue color scale) and the flight path (red line).
-- Selecting [B2](./images/data-visualization.png) will open a drop down containing all of the variables in the data. The program will try to select the vertical velocity `W`, `Q`, or `QVAPOR` variables by default. 
+- [Plotted Variable (B2)](./images/data-visualization.png) will open a drop down containing all of the variables in the data. The program will try to select the vertical velocity `W`, `Q`, or `QVAPOR` variables by default. 
     - Note: due to the nature of these data, there is no filtering out variables that are not plotted well (i.e., `TIMES`, `XLAT`, `XLONG`, etc.), if you encounter an error like "'Limits' must be a 1-by-2 array of real finite numbers that are increasing." in [A5](./images/data-selection.png), you should select a different variable.
-- The slider and edit field [B3](./images/data-visualization.png) allow the user to select the the level to plot. The program automatically selects the vertical level with the highest standard deviation for the selected variable, but you can change it to any level in the simulation.
-- The slider and edit field [B4](./images/data-visualization.png) allow the user to select the time step (or file corresponding to said time step) to plot.
+- The slider and edit field [Sim. Level (B3)](./images/data-visualization.png) allow the user to select the the level to plot. The program automatically selects the vertical level with the highest standard deviation for the selected variable, but you can change it to any level in the simulation.
+- The slider and edit field [time Index (B4)](./images/data-visualization.png) allow the user to select the time step (or file corresponding to said time step) to plot.
 
 # Flight planning
 ## Manual flight planning
 The flight planning tool allows the user to plan a flight path through the simulation data. The user can select the start and end points of the flight path, as well as the number of waypoints in between. There is also an automated flight planning tool that will generate a flight path that tries to optimize the path based on how well it observes a given target.
 ![](./images/flight-planning-1.png)
-- For [C1](./images/flight-planning-1.png) and [C2](./images/flight-planning-1.png) see [Automatic flight planning](#automated-flight-planning) for more information on the automated flight planning tool.
-- [C3](./images/flight-planning-1.png) opens up a tool for the user to manually draw waypoints on the map (see [C5](./images/flight-planning-1.png)). After pressing the button, hover over the map and click to place a waypoint. The gui will update with a blue polyline after each waypoint (see the figure below). Press `Enter` to finish placing waypoints. If a flight path is already on the map, the tool will start building the path from the last waypoint in the preexisting path.
+- For [Interactive Target Planner (C1)](./images/flight-planning-1.png) and [Interactive Flight Planner (C2)](./images/flight-planning-1.png) see [Automatic flight planning](#automated-flight-planning) for more information on the automated flight planning tool.
+- [Manually Draw Path (C3)](./images/flight-planning-1.png) opens up a tool for the user to manually draw waypoints on the map (see [C7](./images/flight-planning-1.png)). After pressing the button, hover over the map and click to place a waypoint. The GUI will update with a blue polyline after each waypoint (see the figure below). Press `Enter` to finish placing waypoints. If a flight path is already on the map, the tool will start building the path from the last waypoint in the preexisting path.
+
 ![](./images/flight-planning-2.png)
 
-- To edit the path, press [C4](./images/flight-planning-1.png). This will draw an interactive polyline on the map over the preexisting path. You can click and drag the waypoints to move them. Press `Enter` to finish editing the path. 
+- To edit the path, press [Edit Path (C4)](./images/flight-planning-1.png). This will draw an interactive polyline on the map over the preexisting path. You can click and drag the waypoints to move them. Click [Edit Path (C4)](./images/flight-planning-1.png) again to finalize the path.
 - [C5](./images/flight-planning-1.png) is a table of all legs on the flight path and their corresponding metadata:
 
 | Column | Description |
@@ -75,41 +76,42 @@ The automated flight planning tool allows the user to iteratively plan optimized
 ### Target selection application
 The first step is to choose a target for the flight to observe.
 
-To do this, select [C1](./images/flight-planning-1.png) and a new window will open (see below).
+To do this, select [Interactive Target Planenr (C1)](./images/flight-planning-1.png) and a new window will open (see below).
 ![](./images/target-planning-1.png).
-- There are three different options for choosing the target. This algorithm is based on the active contours model (Chan and Vese 2001), which is a method for segmenting images based on a 'seed' point(s), a growth tendency, and number of iterations (default is 200; set in [D7](./images/target-planning-1.png)). Positive growth tendencies tends to shrink, negative tends to grow; however, for exceptionally smooth fields (like the one shown here), you will need to use a more aggressive positive value and vice versa.
-    - [D1a](./images/target-planning-1.png) allows the user to put point ROIs on the map. Press `Esc` to finish placing points. The default growth tendency is `-0.2`, since the growth algorithm must often grow substantially outwards from each point to capture the entire target.
-    - [D1b](./images/target-planning-1.png) allows the user to draw a polyline ROI on the map. To finish, press `Enter`. The default growth tendency is `-0.1`, since the region must grow to fill the target, but not as much as the point ROI.
-    - [D1c](./images/target-planning-1.png) allows the user to draw a polygon ROI on the map. To finish drawing, completely enclose the polgygon around the desired target. The default growth tendency is `0.1`, since the region must shrink around the target.
+- There are three different options for choosing the target. This algorithm is based on the active contours model (Chan and Vese 2001), which is a method for segmenting images based on a 'seed' point(s), a growth tendency, and number of iterations (default is 200; set in [Max Iterations (D7)](./images/target-planning-1.png)). Positive growth tendencies tends to shrink, negative tends to grow; however, for exceptionally smooth fields (like the one shown here), you will need to use a more aggressive positive value and vice versa.
+    - [Draw Point ROI (D1a)](./images/target-planning-1.png) allows the user to put point ROIs on the map. Press `Esc` to finish placing points. The default growth tendency is `-0.2`, since the growth algorithm must often grow substantially outwards from each point to capture the entire target.
+    - [Draw Line ROI (D1b)](./images/target-planning-1.png) allows the user to draw a polyline ROI on the map. To finish, press `Enter`. The default growth tendency is `-0.1`, since the region must grow to fill the target, but not as much as the point ROI.
+    - [Draw Polygon ROI (D1c)](./images/target-planning-1.png) allows the user to draw a polygon ROI on the map. To finish drawing, completely enclose the polgygon around the desired target. The default growth tendency is `0.1`, since the region must shrink around the target.
 - When you are done, the program will attempt to segment the target from the background image (see below).  
 ![](./images/target-planning-2.png)
-- If you are satisfied with the results, click on [D2](./images/target-planning-1.png) to finalize the target. You may then add a new target by following the same steps. 
+- If you are satisfied with the results, click on [Finalize Target (D2)](./images/target-planning-1.png) to finalize the target. You may then add a new target by following the same steps. 
 - If you are not satisfied:
-    - You may erase contiguous regions of the target by selecting [D3](./images/target-planning-1.png) and clicking on the map (press `Esc` to finish). 
-    - You can also clear the entire target by selecting [D4](./images/target-planning-1.png).
-- After adding all targets, cleaning up the targets, and finalizing the targets, select [D5](./images/target-planning-1.png) to close the window, export the targets to the main AOSPRE-GUI software, and return to the flight planning page.
+    - You may erase contiguous regions of the target by selecting [Erase Tool (D3)](./images/target-planning-1.png) and clicking on the map (press `Esc` to finish). 
+    - You can also clear the entire target by selecting [Clear Target (D4)](./images/target-planning-1.png).
+- After adding all targets, cleaning up the targets, and finalizing the targets, select [Done/Exit (D5)](./images/target-planning-1.png) to close the window, export the targets to the main AOSPRE-GUI software, and return to the flight planning page.
 
 #### Target metadata
-- Finally, in cases where a certain target is more important, you can assign a weight to each target before finalizing. Enter your desired weight in [D6a](./images/target-planning-1.png). The flight planning program functions best when the weight of targets is greater than 5 and less than 30.
-- [D6b](./images/target-planning-1.png) allows the user to set the desired dwell time for each target. This is the amount of time the aircraft should spend observing the target. The default is 0 seconds, which means the aircraft has no limit on how long it can observe the target before the weight of the target is reduced. This setting is not yet fully implemented in the flight planning algorithm, but it will be in the future.
+- Finally, in cases where a certain target is more important, you can assign a weight to each target before finalizing. Enter your desired weight in [Target Weight (D6a)](./images/target-planning-1.png). The flight planning program functions best when the weight of targets is greater than 5 and less than 30.
+- [Target Dwell Time (D6b)](./images/target-planning-1.png) allows the user to set the desired dwell time for each target. This is the amount of time the aircraft should spend observing the target. The default is 0 seconds, which means the aircraft has no limit on how long it can observe the target before the weight of the target is reduced. This setting is not yet fully implemented in the flight planning algorithm, but it will be in the future.
+
 ### Flight planning application
 After selecting the targets, the user can begin the automated flight planning process. First, in the dropdown [C2](./images/flight-planning-1.png) select 'Start new flight' to erase any existing flight path, or 'Continue' to build off a preexisting path. Then select `Interactive Flight Planner`. A new window will open (see below). This algorithm is a modified version of rapidly expanding random trees (LaValle and Kuffner 1999). The details of this algorithm are in [flight-planning-details.md](./flight-planning-details.md).
 ![](./images/flight-planning-3.png)
 #### Training settings
-- [E1a](./images/flight-planning-3.png) sets the desired path length (in hours) for the flight.
-- [E1b](./images/flight-planning-3.png) sets the learning rate. This is how quickly the algorithm reduces the number of random samples in the environment vs. the number of samples near high-quality paths. The default is `0.008`, which means the algorithm will spend the first $\frac{0.5}{0.008}\sim 63$ iterations learning the environment before only sampling points near high-quality legs. For complex environments, the learning rate should be lower than the default, but simpler environments may benefit from a higher learning rate.
-- [E1c](./images/flight-planning-3.png) sets the number of iterations the algorithm will run. The default is `100`, which is sufficient for most environments.
-- [E1d](./images/flight-planning-3.png) sets the number of new nodes to add to the network simultaneously. The nodes in a single parallel computation will not build on one another, just the pre-existing network. The default is `100`, which is sufficient for most environments.
+- [Desired Path Length (E1a)](./images/flight-planning-3.png) sets the desired path length (in hours) for the flight.
+- [Learning Rate(E1b)](./images/flight-planning-3.png) sets the learning rate. This is how quickly the algorithm reduces the number of random samples in the environment vs. the number of samples near high-quality paths. The default is `0.008`, which means the algorithm will spend the first $\frac{0.5}{0.008}\sim 63$ iterations learning the environment before only sampling points near high-quality legs. For complex environments, the learning rate should be lower than the default, but simpler environments may benefit from a higher learning rate.
+- [Number of Iterations (E1c)](./images/flight-planning-3.png) sets the number of iterations the algorithm will run. The default is `100`, which is sufficient for most environments.
+- [Number of Parellel Paths (E1d)](./images/flight-planning-3.png) sets the number of new nodes to add to the network simultaneously. The nodes in a single parallel computation will not build on one another, just the pre-existing network. The default is `100`, which is sufficient for most environments.
 
 #### Running the program
-- Set the start position and direction of the aircraft by pressing [E2a](./images/flight-planning-3.png) and clicking and dragging on the map. The aircraft will start at the point where you first pressed the mouse button. In cases where you are continuing a path, the aircraft will start at the last waypoint in the preexisting path.
-- Press [E2b](./images/flight-planning-3.png) to finalize the start position. After this is pressed, the blue line will turn into a red arrow. You can always change the start position by pressing [E2a](./images/flight-planning-3.png) again. This button will also reset the network if you choose to restart the training.
-- Press [E2c](./images/flight-planning-3.png) to begin the training process. The program will run the algorithm for the number of iterations set in [E1c](./images/flight-planning-3.png). 
+- [Set Start for flight (E2a)](./images/flight-planning-3.png) can be used to set the start point and direction of the aircraft. Click and drag on the map in the direction to start. The aircraft will start at the point where you first pressed the mouse button. In cases where you are continuing a path, the aircraft will start at the last waypoint in the preexisting path.
+- [Finalize Start/Reset (E2b)](./images/flight-planning-3.png) to finalize the start position. After this is pressed, the blue line will turn into a red arrow. You can always change the start position by pressing [Set Start for Flight (E2a)](./images/flight-planning-3.png) again. This button will also reset the network if you choose to restart the training.
+- [Begin Training (E2c)](./images/flight-planning-3.png) to begin the training process. The program will run the algorithm for the number of iterations set in [E1c](./images/flight-planning-3.png). 
     - The program will update the map with the new path after every second iteration.
     - The network will condense (combine nearby nodes $<3$ km apart) every 10 iterations.
     - The network will trim (remove low-quality paths) every 4 iterations after the halfway point in training.
     - See [flight-planning-details.md](./flight-planning-details.md) for more information on the algorithm.
-- Press the start and stop buttons [E2d](./images/flight-planning-3.png) to start and stop the training process. The program will automatically stop after the number of iterations set in [E1c](./images/flight-planning-3.png) is reached.
+- Press the [Begin/continue training](./images/flight-planning-3.png) and [Stop Training](./images/flight-planning-3.png) buttons to start and stop the training process. The program will automatically stop after the number of iterations set in [E1c](./images/flight-planning-3.png) is reached.
 
 #### Plotting tools
 There are three main parts to the plotted network:
@@ -117,8 +119,30 @@ There are three main parts to the plotted network:
 - The red contours ([E3b](./images/flight-planning-3.png)) are the regions of high quality legs where the algorithm is more likely to sample points. These will shift throughout the training process as the network learns the environment.
 - The blue paths ([E3c](./images/flight-planning-3.png)) are the paths that the algorithm has deemed high quality. You can select a path by clicking on it, and the program will highlight the path in green. You may stop the training at any time and pick a path.
 #### Saving the path and exporting to the main GUI
-- After you have selected a path, press [E4](./images/flight-planning-3.png) to finalize the path and press [E5](./images/flight-planning-3.png) to export the path to the main GUI. These buttons will turn green when you can press them.
+- After you have selected a path, press [Finalize Path (E4)](./images/flight-planning-3.png) to finalize the path and press [Done/Exit (E5)](./images/flight-planning-3.png) to export the path to the main GUI. These buttons will turn green when you can press them.
     - Note: the path may dissapear after pressing 'Finalize Path'. This is normal, since the path object has been moved to a buffer before being moved to the main GUI.
-- As before, you may edit this path manually or interactively by pressing [C4](./images/flight-planning-1.png) in the main GUI after exporting the path.
+- As before, you may edit this path manually or interactively by pressing [Edit path (C4)](./images/flight-planning-1.png) in the main GUI after exporting the path.
 
-# AOSPRE setup
+# AOSPRE details
+The third tab in the GUI has several options for choosing details of the aircraft and the simulation.
+![](./images/aospre-details.png)
+
+## Simulation details
+- [path to AOSPRE (F1)](./images/aospre-details.png) set the global path to the AOSPRE executable here.
+- [Start Time (F2)](./images/aospre-details.png) allows the user to set the start time of the AOSPRE simulation. The default is the first time step in the simulation. You can also set the time by clicking on the slider---the program will round to the nearest time step.
+## Aircraft, Panel, and Scan settings ([F4](./images/aospre-details.png))
+- [Aircraft Vel.](./images/aospre-details.png) allows the user to set the aircraft velocity in meters per second. The default is $120$ m s $^{-1}$.
+- [Angular Resolution](./images/aospre-details.png) sets the angular resolution of the aircraft's sensors. The default is $1.5$ degrees.
+- [Fore/Aft](./images/aospre-details.png) sets the fore/aft angles for a forward/rearward scan. The default is 5 and 35 degrees, respectively. 
+
+## Running AOSPRE 
+Pressing [Init. AOSPRE (F5)](./images/aospre-details.png) will write the namelists, scanning tables, and executable to run AOSPRE.
+    - The scanlists and namelists are written to the `./output/scanlists/` and `./output/namelists/` directories, respectively.
+    - A bash script is written to `./output/run-aospre.sh` that will run the AOSPRE executable with the namelists and scanlists. 
+
+# Advanced settings
+The fourth tab in the GUI has several advanced settings for the user to set. These do not need to be modified for the program to run, but may be useful for more advanced users. The names of these settings are the same as the variables in the AOSPRE namelists, so you can refer to the AOSPRE [namelist documentation](https://github.com/NCAR/AOSPRE/blob/main/docs/namelist.md) for more information on each setting.
+
+![](./images/advanced-settings.png)
+
+
