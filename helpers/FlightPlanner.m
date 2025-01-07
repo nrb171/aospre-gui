@@ -26,14 +26,14 @@ classdef FlightPlanner < handle
             'learningRate', 0.008, ...      % rate of learning for valid mask
             'nLoops', 100, ...              % number of loops
             'nParallel', 100, ...           % number of sibling paths to calculate before updating the valid mask
-            'trimStart', 0.6, ...           % fraction of iterations of nParallel to wait before trimming
+            'trimStart', 0.5, ...           % fraction of iterations of nParallel to wait before trimming
             'trimRate', 4, ...              % rate to trim lowest percentile of trees after trimStart
             'trimAggression', 65, ...       % highest percentile quality of trees to keep
             'trimLearningRate', 0, ...      % rate that percentile of triming goes up (per loop above trimStart)
             'trimLength', 1, ...            % minimum length of bad trees to cut
             'desiredPathLength', 1, ...     % desired path length (hours)
             'condensationRate', 10, ...     % rate to condense network
-            'condensationRadius', 4)        % radius to perform search (pixels)
+            'condensationRadius', 3)        % radius to perform search (pixels)
         validMask                       % weighted mask of valid locations in the environment
         priorPath = [];
     end
@@ -89,6 +89,7 @@ classdef FlightPlanner < handle
     %% Private methods for model training.
     methods (Access = private)
         function [costs,heading,targetsObserved] = costOfLegs(obj, oldWaypointIDs, newWaypointIDs)
+            
                 % loop through each possible node and calculate the cost of the leg
                 %obj.Targets.dwellTime, observedTime, weight
                 % distance from target
@@ -336,8 +337,8 @@ classdef FlightPlanner < handle
             parentRow = obj.flights.Nodes(distsMinInd,:).row;
             parentCol = obj.flights.Nodes(distsMinInd,:).col;
             headingTemp = atan2d(row - parentRow, col - parentCol);
-            newRow = round(parentRow + min(distsMin',searchLengthHelper).*sind(headingTemp)/obj.Environment.resolution);
-            newCol = round(parentCol + min(distsMin',searchLengthHelper).*cosd(headingTemp)/obj.Environment.resolution);
+            newRow = floor(parentRow + min(distsMin',searchLengthHelper).*sind(headingTemp)/obj.Environment.resolution);
+            newCol = floor(parentCol + min(distsMin',searchLengthHelper).*cosd(headingTemp)/obj.Environment.resolution);
             tab.row = newRow;
             tab.col = newCol;
 
@@ -351,6 +352,7 @@ classdef FlightPlanner < handle
             nodesToBeRemoved = [];
             priorParentID = [];
             for ii=1:nParallelMod
+                
                 newWaypointID = newWaypointIDs(ii);
                 oldWaypointIDs = find(dists(:,ii) < searchLengthHelper*1.2);
 
@@ -361,6 +363,7 @@ classdef FlightPlanner < handle
                 [lowestCost, lowCostInd] = min(costs(:));
 
                 % if no valid path is found, remove the last node and return
+                
                 if isinf(lowestCost)
                     nodesToBeRemoved(end+1) = newWaypointID;
                     continue
@@ -368,6 +371,7 @@ classdef FlightPlanner < handle
 
                 % update the new node with metadata from the parent node
                 [parentRow, ~] = ind2sub(size(costs), lowCostInd);
+                
                 tab.parent(ii) = oldWaypointIDs(parentRow);
 
                 % add edge from parent to new node    
@@ -436,9 +440,11 @@ classdef FlightPlanner < handle
 
         function obj = updateValidMask(obj)
             %% update the valid mask based on the current location of the aircraft
-            if height(obj.flights.Nodes > 15)
+            
+            if obj.loopNumber > 3
                 % new method
                 % find all edges less than zero
+
                 edges = find(obj.flights.Edges.Weight < min(prctile(obj.flights.Edges.Weight, 5), obj.Costs.base));
                 parents = obj.flights.Edges.EndNodes(edges,1);
                 children = obj.flights.Edges.EndNodes(edges,2);
@@ -466,6 +472,7 @@ classdef FlightPlanner < handle
                 end
     
                 obj.validMask(obj.validMask < 0) = 0.0001;
+                
             end
         end % updateValidMask
 
@@ -657,6 +664,7 @@ classdef FlightPlanner < handle
 
             startLoop = obj.loopNumber;
             for i = startLoop:obj.TrainingOptions.nLoops
+                
                 obj.finalizeBtn.BackgroundColor = [1, 0.5, 0.5];
                 obj.doneBtn.BackgroundColor = [1, 0.5, 0.5];
                 obj = addPath(obj);
@@ -731,7 +739,8 @@ classdef FlightPlanner < handle
 
             try 
                 obj = obj.getBestPaths();
-            catch
+            catch ME
+                
                 fprintf('error in getBestPaths')
             end
             daspect(ax, [1,1,1])
@@ -929,6 +938,9 @@ classdef FlightPlanner < handle
 
             % can use max flow..
             % can use shortest path..
+            if isa(obj.flights, 'double')
+                return
+            end
 
             ce = centrality(obj.flights, 'outdegree');
             
