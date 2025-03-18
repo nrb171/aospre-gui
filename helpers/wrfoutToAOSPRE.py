@@ -4,7 +4,6 @@
 
 ### Load modules
 import datetime as dt
-import sys
 import argparse
 import os
 
@@ -12,10 +11,22 @@ import os
 parser = argparse.ArgumentParser(description='Rename WRF output files to AOSPRE compatible format')
 parser.add_argument('-in' , '--inputDir', help='Directory containing WRF output files')
 parser.add_argument('-out','--outputDir', help='Directory to save AOSPRE compatible files')
+parser.add_argument('-o', '--options', help='Options for renaming files ln or mv (default: ln)', default='ln')
 args = parser.parse_args()
+
+
 
 wrfoutDir = args.inputDir
 outputDir = args.outputDir
+option = args.options
+
+if option not in ['ln','mv']:
+    print('symlink')
+    option = 'ln'
+
+if option == 'ln':
+    option = 'ln -s'
+
 
 ### find files in wrfoutDir, find start time, 
 # find files
@@ -23,13 +34,13 @@ wrfFiles = os.listdir(wrfoutDir)
 for i in range(len(wrfFiles)):
     wrfFiles[i].replace('/',':')
 mask = ['wrfout' in file for file in wrfFiles]
-print(mask)
+# print(mask)
 wrfFiles = [wrfFiles[i] for i in range(len(wrfFiles)) if mask[i]]
 wrfFiles.sort()
 
 
 
-print(wrfFiles)
+# print(wrfFiles)
 
 # find start time
 startString = wrfFiles[0].split('_')
@@ -37,6 +48,7 @@ timeString = startString[2]+'_'+startString[3]
 startDt = dt.datetime.strptime(timeString, '%Y-%m-%d_%H:%M:%S')
 
 ### convert to seconds since start time for each file and rename
+checked = 0
 for file in wrfFiles:
     if 'wrfout' not in file:
         continue
@@ -52,8 +64,15 @@ for file in wrfFiles:
 
     # rename file
     newFile = prefix+'{:06.0f}'.format(seconds)+'.nc'
-    command = 'mv '+wrfoutDir+'/'+file+' '+outputDir+'/'+newFile
+    # command = 'mv '+wrfoutDir+'/'+file+' '+outputDir+'/'+newFile
+    command = option+' '+wrfoutDir+'/'+file+' '+outputDir+'/'+newFile
+
     print(command)
+    if checked == 0:
+        if input('is this correct? (y/n): ') != 'y':
+            break
+        checked = 1
+
     os.system(command)
     
 
