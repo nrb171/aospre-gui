@@ -20,9 +20,25 @@ You may also run the `AOSPRE_GUI.mlapp` file directly from the MATLAB GUI by nav
 
 # Data selection
 ## Data preprocessing
+### moving/renaming wrfout files
 To ensure compatibility with AOSPRE, you must preprocess the simulations you wish to use by renaming the simulation's output files to elapsed seconds (e.g., `wrfout_0015500s.nc` where there has been 0015500 seconds since the start of the simulation). 
 
-The python script [`wrfoutToAOSPRE.py`](../helpers/wrfoutToAOSPRE.py) has been provided for the user as a template in cases where the data is not in the default `wrfout_d0X_YYYY-MM-DD_HH:MM:SS` format. If your data is in this format, you can move to the next section and the GUI will automatically rename the files for you.
+The python script [`wrfoutToAOSPRE.py`](../helpers/wrfoutToAOSPRE.py) has been provided for the user as a template in cases where the data is not in the default `wrfout_d0X_YYYY-MM-DD_HH:MM:SS` format. If your data is in this format, and you are alright with having the files renamed, you can move to the next section, and the GUI will automatically rename the files for you. 
+
+You can manually call [`wrfoutToAOSPRE.py`](../helpers/wrfoutToAOSPRE.py) using the following syntax
+```bash
+python /path/to/wrfoutToAOSPRE.py -in /path/to/wrfoutFiles -out /path/to/workingDirectory -o mv
+```
+
+### creating symbolic links to wrfout files
+It may be preferred to simply link the wrfout files to a working directory instead of moving/renaming the files themselves. If this is how you want to use the data, you can use [`wrfoutToAospre.py`](../helpers/wrfoutToAOSPRE.py). The default behavior is to link the files instead of moving them. I.e.,
+```bash
+python /path/to/wrfoutToAOSPRE.py -in /path/to/wrfoutFiles -out /path/to/workingDirectory
+```
+or
+```bash
+python /path/to/wrfoutToAOSPRE.py -in /path/to/wrfoutFiles -out /path/to/workingDirectory -o ln
+```
 
 ## Selecting the data
 - The first step in using AOSPRE-GUI is to select the data you want to use for your simulation. You can do this by manually typing the path to the data ([ File Search Pattern (A1)]()) or by using the file browser to navigate to the data ([A2]()). If the software detects data saved in an incorrect format, it will prompt you to automatically rename the files, simply press "Yes". Note: this process assumes that the filenames are in the default `wrfout_d0X_YYYY-MM-DD_HH:MM:SS` format.
