@@ -5,12 +5,17 @@ function [imsc] = nuimagesc(ax,xlat, xlon, var)
 %   than alternatives like PCOLOR(), which uses surfaces instead of images.
     xlat2 = xlat;
     xlon2 = xlon;
+    
     var2 = var;
     indsi = round(linspace(1,size(xlon,1),31));
     indsj = round(linspace(1,size(xlon,2),31));
-    hold(ax, 'on')
     for ii = 1:numel(indsi)-1
         for jj = 1:numel(indsj)-1
+            if ii == 1 & jj == 1
+                hold(ax, 'off')
+            else
+                hold(ax, 'on')
+            end
             xlat = xlat2(...
                 max(indsi(ii)-2,1):min(indsi(ii+1)+2, size(xlat2,1)), ...
                 max(indsj(jj)-2,1):min(indsj(jj+1)+2, size(xlat2,2)));
@@ -37,9 +42,11 @@ function [imsc] = nuimagesc(ax,xlat, xlon, var)
             alphaData = ones(size(im))*1;
             alphaData(im == 0) = 0;
             alphaData(isnan(im)) = 0;
+
+            im(im == 0) = NaN;
+            
             
             % close all
-        
             imagesc(ax,...
                 [min(xlon(:)), max(xlon(:))], ...
                 [min(xlat(:)), max(xlat(:))], ...
