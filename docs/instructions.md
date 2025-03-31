@@ -139,6 +139,21 @@ There are three main parts to the plotted network:
     - Note: the path may dissapear after pressing 'Finalize Path'. This is normal, since the path object has been moved to a buffer before being moved to the main GUI.
 - As before, you may edit this path manually or interactively by pressing [Edit path (C4)](./images/flight-planning-1.png) in the main GUI after exporting the path.
 
+## Adding background motion to the flight planning/target acquisitions.
+One shortcoming of the snapshot-based approach to flight planning and target aquisition is that the fields do not remain stationary as time progresses. To account for this, AOSPRE-GUI provides an option for the user to add background motion into the flight paths or target locations. This process automatically calculates the selected field's deformation across time using a process known as image registration (e.g., Vercauteren et al. 2009; Thirion 1998) and then applies this deformation to the flight path or target locations. 
+- This could be useful in cases where the user wants to observe a particular region of the storm over time. E.g., a landfalling storm system can be identified and then tracked backwards in time to properly plan a flight path that observes the storm evolution. 
+### Calculating the background motion
+To calculate the background motion, the user must select a variable to track (e.g., `W`, `QVAPOR`, etc.) in the Plot Details tab and then press the [Calculate Background Motion (G1)](./images/flight-planning-6.png) button in the Flight Planning tab. 
+- A waitbar will pop up to indicate the progress of the calculation. This process can take some time depending on the size of the dataset and the number of time steps.
+- Each time the calculating concludes, the values of these deformations will be saved in `./meta/deformationTransforms.mat`. 
+- If the background motion calculation has already been performed, the program will ask the user if they would like to use the existing deformation data. If you select "OK", if will load the data. If you select "No...", it will recalculate the background motion using the selected variable.
+
+![](./images/flight-planning-6.png)
+
+### Applying background motion to plots
+- To add background motion to the flight path or target locations, check the 'Warp Flight Path' and/or 'Warp Targets' checkboxes in the Plot Details tab. 
+    - These checkboxes will only be interactable after the background motion has been calculated.
+
 # AOSPRE details
 The third tab in the GUI has several options for choosing details of the aircraft and the simulation.
 ![](./images/aospre-details.png)
