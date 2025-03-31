@@ -34,7 +34,7 @@ classdef setTargetInteractive < handle
         function obj = updatePlot(obj, backgroundBool, targetBool)
             if backgroundBool 
                 hold(obj.ax, 'off')
-                pcolor(obj.ax, obj.environment)
+                pcolor(obj.ax, normalize(obj.environment))
                 shading(obj.ax, 'flat')
             end
             if targetBool 
