@@ -151,8 +151,15 @@ To calculate the background motion, the user must select a variable to track (e.
 ![](./images/flight-planning-6.png)
 
 ### Applying background motion to plots
-- To add background motion to the flight path or target locations, check the 'Warp Flight Path' and/or 'Warp Targets' checkboxes in the Plot Details tab. 
+- To add background motion to the flight path or target locations, check the 'Warp Flight Path' and/or 'Warp Targets' checkboxes in the Plot Details tab. The changes will occur when the plotted times are updated.
     - These checkboxes will only be interactable after the background motion has been calculated.
+- A plot of the deformed flight path (using the actual coordinates for the flight path, after storm motion is added) will be shown as a thin blue line on the map. See below for an example.
+    - The flight path is calculated by setting the plotted time to as the first vertex in the path. E.g., If the plotted time is the 16th time step, the flight will 'begin' from this point in time.
+    - If the flight path is longer than the available data, the path will be truncated so that the overall length of the flight fits within the available times. It is required, when running AOSPRE, that the flight path exists completely within the available data.
+
+![](./images/flight-planning-7.png)
+Here, the blue line is southeast of the red path, since the storm is moving in a west-northwesterly direction. The starting location does not change, as deformations are only applied as the aircraft 'moves' through the storm. In this way, the 'true coordinates' (blue line) of the aircraft path are preserved so that the position of the aircraft, relative to the storm, matches what is shown in the red line. 
+
 
 # AOSPRE details
 The third tab in the GUI has several options for choosing details of the aircraft and the simulation.
