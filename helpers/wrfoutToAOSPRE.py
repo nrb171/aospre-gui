@@ -1,6 +1,7 @@
 ### Convert WRF output to AOSPRE compatible format
-# usage: python wrfoutToAOSPRE.py -in /path/to/wrfout/files/ -out /path/to/output/files/
+# usage: python wrfoutToAOSPRE.py -in /path/to/wrfout/files/ -out /path/to/output/files/ -start
 # -in and -out can be the same directory
+# if you don't know the start time, it can be found with: `ncdump -h /path/to/wrfout.nc | grep :SIMULATION_START_DATE`
 
 ### Load modules
 import datetime as dt
@@ -12,6 +13,9 @@ parser = argparse.ArgumentParser(description='Rename WRF output files to AOSPRE 
 parser.add_argument('-in' , '--inputDir', help='Directory containing WRF output files')
 parser.add_argument('-out','--outputDir', help='Directory to save AOSPRE compatible files')
 parser.add_argument('-o', '--options', help='Options for renaming files ln or mv (default: ln)', default='ln')
+parser.add_argument('-start', '--startTime', 
+                    help='Start time for the WRF simulation in format YYYY-MM-DD_HH:MM:SS. If not provided, will use the first file found in the directory.',
+                    default=None)
 args = parser.parse_args()
 
 
@@ -19,6 +23,7 @@ args = parser.parse_args()
 wrfoutDir = args.inputDir
 outputDir = args.outputDir
 option = args.options
+startString = args.startTime
 
 if option not in ['ln','mv']:
     print('symlink')
@@ -43,9 +48,10 @@ wrfFiles.sort()
 # print(wrfFiles)
 
 # find start time
-startString = wrfFiles[0].split('_')
-timeString = startString[2]+'_'+startString[3]
-startDt = dt.datetime.strptime(timeString, '%Y-%m-%d_%H:%M:%S')
+if startString is None:
+    raise(ValueError('No start time provided . Please provide a start time with -start.'))
+else:
+    startDt = dt.datetime.strptime(startString, '%Y-%m-%d_%H:%M:%S')
 
 ### convert to seconds since start time for each file and rename
 checked = 0
