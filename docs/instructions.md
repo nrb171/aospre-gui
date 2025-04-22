@@ -60,17 +60,18 @@ A simple plotting tool is provided that allows the user to visualize the data an
     - Note: due to the nature of these data, there is no filtering out variables that are not plotted well (i.e., `TIMES`, `XLAT`, `XLONG`, etc.), if you encounter an error like "'Limits' must be a 1-by-2 array of real finite numbers that are increasing." in [A5](./images/data-selection.png), you should select a different variable.
 - The slider and edit field [Sim. Level (B3)](./images/data-visualization.png) allow the user to select the the level to plot. The program automatically selects the vertical level with the highest standard deviation for the selected variable, but you can change it to any level in the simulation.
 - The slider and edit field [time Index (B4)](./images/data-visualization.png) allow the user to select the time step (or file corresponding to said time step) to plot.
+- There is a blue contour around the flight path that shows the area that the aircraft can observe. You can set the radius of this contour by changing the `max_range_in_meters` variable in the [Advanced Settings](./images/advanced-settings.png) tab. The default is 75000 m.
 
 # Flight planning
 ## Manual flight planning
 The flight planning tool allows the user to plan a flight path through the simulation data. The user can select the start and end points of the flight path, as well as the number of waypoints in between. There is also an automated flight planning tool that will generate a flight path that tries to optimize the path based on how well it observes a given target.
 ![](./images/flight-planning-1.png)
-- For [Interactive Target Planner (C1)](./images/flight-planning-1.png) and [Interactive Flight Planner (C2)](./images/flight-planning-1.png) see [Automatic flight planning](#automated-flight-planning) for more information on the automated flight planning tool.
-- [Manually Draw Path (C3)](./images/flight-planning-1.png) opens up a tool for the user to manually draw waypoints on the map (see [C7](./images/flight-planning-1.png)). After pressing the button, hover over the map and click to place a waypoint. The GUI will update with a blue polyline after each waypoint (see the figure below). Press `Enter` to finish placing waypoints. If a flight path is already on the map, the tool will start building the path from the last waypoint in the preexisting path.
+- For [Interactive Target Planner (C1)](./images/flight-planning-1.png) and [Interactive Flight Planner (C2)](./images/flight-planning-1.png) see [Automatic flight planning](#automated-flight-planning) for more information on the automated flight planning tool. There are three options, `New`, `Continue`, and `Optimize` which are described in more detail in the [Automated flight planning](#automated-flight-planning) section.
+- [Manually Add flight leg (C3)](./images/flight-planning-1.png) opens up a tool for the user to manually draw waypoints on the map (see [C7](./images/flight-planning-1.png)). After pressing the button, hover over the map and click to place a waypoint. The GUI will update with a blue polyline after each waypoint (see the [figure below](./images/flight-planning-2.png)). Press `Enter` on the keyboard to finish placing waypoints. If a flight path is already on the map, the tool will start building the path from the last waypoint in the preexisting path.
 
 ![](./images/flight-planning-2.png)
 
-- To edit the path, press [Edit Path (C4)](./images/flight-planning-1.png). This will draw an interactive polyline on the map over the preexisting path. You can click and drag the waypoints to move them. Click [Edit Path (C4)](./images/flight-planning-1.png) again to finalize the path.
+- To edit the path, press [Edit flight leg vertices (C4)](./images/flight-planning-1.png). This will draw an interactive polyline on the map over the preexisting path. You can click and drag the waypoints to move them. Click [Edit Path (C4)](./images/flight-planning-1.png) again to finalize the path.
 - [C5](./images/flight-planning-1.png) is a table of all legs on the flight path and their corresponding metadata:
 
 | Column | Description |
@@ -86,7 +87,8 @@ The flight planning tool allows the user to plan a flight path through the simul
     - `Clear/Leg/Row` will delete the entire row of the selected cell.
     - `Refresh/Selection` will refresh the selected cells with the current data in the table. Since there are three pairs of data in the table (start x+y, end x+y, and leg time+heading), you can clear one pair of the data, change any of the other two pairs, and then refresh the table to recalculate the missing pair.
     - `Add new Leg` will add a new row of `NaN`s to the table. The user can then manually input the data for the new leg. If there is an empty row at the end of the table and the user begins to manually draw a new path, the program will automatically fill in the table with the new path data.
-
+- [C8](./images/flight-planning-1.png) shows the outline of the target selected in the [Interactive Target Planner (C1)](./images/flight-planning-1.png) tab. The target will be shown as a thin contour on the map for each target.
+- Lastly, [C9–C11](./images/flight-planning-1.png) controls the time deformation of the flight path. These are described in more detail in the [Adding background motion to the flight planning/target acquisitions](#adding-background-motion-to-the-flight-planningtarget-acquisitions) section.
 ## Automated flight planning
 The automated flight planning tool allows the user to iteratively plan optimized flight paths through a given simulation. These are based on how well the flight path observes the target and how safe the flight path is to travel. 
 ### Target selection application
@@ -143,22 +145,20 @@ There are three main parts to the plotted network:
 One shortcoming of the snapshot-based approach to flight planning and target aquisition is that the fields do not remain stationary as time progresses. To account for this, AOSPRE-GUI provides an option for the user to add background motion into the flight paths or target locations. This process automatically calculates the selected field's deformation across time using a process known as image registration (e.g., Vercauteren et al. 2009; Thirion 1998) and then applies this deformation to the flight path or target locations. 
 - This could be useful in cases where the user wants to observe a particular region of the storm over time. E.g., a landfalling storm system can be identified and then tracked backwards in time to properly plan a flight path that observes the storm evolution. 
 ### Calculating the background motion
-To calculate the background motion, the user must select a variable to track (e.g., `W`, `QVAPOR`, etc.) in the Plot Details tab and then press the [Calculate Background Motion (G1)](./images/flight-planning-6.png) button in the Flight Planning tab. 
+To calculate the background motion, the user must select a variable to track (e.g., `W`, `QVAPOR`, etc.) in the Flight Planning tab and then press the [Calculate Background Motion (C10)](./images/flight-planning-1.png).
 - A waitbar will pop up to indicate the progress of the calculation. This process can take some time depending on the size of the dataset and the number of time steps.
-- Each time the calculating concludes, the values of these deformations will be saved in `./meta/deformationTransforms.mat`. 
+- Each time the calculating concludes, the values of these deformations will be saved in `./.meta/deformationTransforms.mat`. 
 - If the background motion calculation has already been performed, the program will ask the user if they would like to use the existing deformation data. If you select "OK", if will load the data. If you select "No...", it will recalculate the background motion using the selected variable.
 
-![](./images/flight-planning-6.png)
 
 ### Applying background motion to plots
-- To add background motion to the flight path or target locations, check the 'Warp Flight Path' and/or 'Warp Targets' checkboxes in the Plot Details tab. The changes will occur when the plotted times are updated.
+- To add background motion to the flight path or target locations, check the 'Warp Flight Path' and/or 'Warp Targets' checkboxes ([C11](./images/flight-planning-1.png)) in the Plot Details tab. The changes will occur when the plotted times are updated.
     - These checkboxes will only be interactable after the background motion has been calculated.
 - A plot of the deformed flight path (using the actual coordinates for the flight path, after storm motion is added) will be shown as a thin blue line on the map. See below for an example.
     - The flight path is calculated by setting the plotted time to as the first vertex in the path. E.g., If the plotted time is the 16th time step, the flight will 'begin' from this point in time.
     - If the flight path is longer than the available data, the path will be truncated so that the overall length of the flight fits within the available times. It is required, when running AOSPRE, that the flight path exists completely within the available data.
 
-![](./images/flight-planning-7.png)
-Here, the blue line is southeast of the red path, since the storm is moving in a west-northwesterly direction. The starting location does not change, as deformations are only applied as the aircraft 'moves' through the storm. In this way, the 'true coordinates' (blue line) of the aircraft path are preserved so that the position of the aircraft, relative to the storm, matches what is shown in the red line. 
+Here, the pink line (see [C9](./images/flight-planning-1.png)) is northeast of the red path, since the storm is moving in a west-south-westerly direction. The starting location does not change, as deformations are only applied as the aircraft 'moves' through the storm. In this way, the 'true coordinates' (pink line) of the aircraft path are preserved so that the position of the aircraft, relative to the storm, matches what is shown in the red line. 
 
 
 # AOSPRE details
