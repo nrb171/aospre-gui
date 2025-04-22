@@ -6,7 +6,7 @@ The following instructions will guide you through the various processes of AOSPR
 1. [Selecting a simulation](#data-selection)
 2. [Data visualizing](#data-visualization)
 3. [Flight planning](#flight-planning)
-4. [AOSPRE details](#aospre-setup)
+4. [AOSPRE details](#aospre-details)
 5. [Running AOSPRE](#running-aospre)
 6. [Advanced settings](#advanced-settings) 
 
@@ -53,7 +53,7 @@ python /path/to/wrfoutToAOSPRE.py -in /path/to/wrfoutFiles -out /path/to/working
 - Lastly, you may manually set the format for for the time search pattern in the filenames. The default should be correct for most users, but if you have a different format, you can set it in [File Time Pattern (A4)](). The `?` character is a wildcard that will match any character, then set the `s` character at locations in the filename string that corresponds to the elapsed seconds. For example, the image above reflects a filename of `wrfout_0015500s.nc`.
 
 # Data visualization
-A simple plotting tool is provided that allows the user to visualize the data and flight paths at the same time. 
+A simple plotting tool is provided that allows the user to visualize the data and flight paths at the same time. (Please note that with new updates, the data is now plotted alongside a simple map and is shown in the proper projection. This has no change on anything other than the visualization)
 ![](./images/data-visualization.png)
 - [B1](./images/data-visualization.png) shows the selected variable (yellow to blue color scale) and the flight path (red line).
 - [Plotted Variable (B2)](./images/data-visualization.png) will open a drop down containing all of the variables in the data. The program will try to select the vertical velocity `W`, `Q`, or `QVAPOR` variables by default. 
