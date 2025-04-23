@@ -113,8 +113,22 @@ To do this, select [Interactive Target Planenr (C1)](./images/flight-planning-1.
 - [Target Dwell Time (D6b)](./images/target-planning-1.png) allows the user to set the desired dwell time for each target. This is the amount of time the aircraft should spend observing the target. The default is 0 seconds, which means the aircraft has no limit on how long it can observe the target before the weight of the target is reduced. This setting is not yet fully implemented in the flight planning algorithm, but it will be in the future.
 
 ### Flight planning application
-After selecting the targets, the user can begin the automated flight planning process. First, in the dropdown [C2](./images/flight-planning-1.png) select 'Start new flight' to erase any existing flight path, or 'Continue' to build off a preexisting path. Then select `Interactive Flight Planner`. A new window will open (see below). This algorithm is a modified version of rapidly expanding random trees (LaValle and Kuffner 1999). The details of this algorithm are in [flight-planning-details.md](./flight-planning-details.md).
+After selecting the targets, the user can begin the automated flight planning process. First, in the dropdown [C2](./images/flight-planning-1.png) select "New to erase any existing flight path, "Continue" to build off a preexisting path, or "Optimize" to optimize the currently drawn path. We have had the most success using the "Optimize" Then select `Interactive Flight Planner`. A new window will open (see below). This algorithm is a modified version of rapidly expanding random trees (LaValle and Kuffner 1999). The details of this algorithm are in [flight-planning-details.md](./flight-planning-details.md).
 ![](./images/flight-planning-3.png)
+
+### "New" flight planning
+This option will erase any existing flight path and you will need to set the start by first clicking on the [Set Start for flight (E2a)](./images/flight-planning-3.png) button and clicking and dragging from the desired start point. The start point will be set as the area at which the mouse button was first depressed, the heading will be set by the direction in which the mouse is moved. This will draw a red arrow line on the map that reflects these settings. After you are happy with this start/heading, press [Finalize Start position/reset network (E2B)](./images/flight-planning-3.png), and finally [Begin Training (E2c)](./images/flight-planning-3.png) to begin the training process.
+
+### "Continue" flight planning
+This option will build off a preexisting flight path. The start will be assigned as the final point in the preexisting path. Press [Finalize Start position/reset network (E2B)](./images/flight-planning-3.png), and [Begin Training (E2c)](./images/flight-planning-3.png) to begin the training process.
+
+### "Optimize" flight planning
+This option will optimize the currently drawn flight path. This tool is best when the user has a "start" and "end" point in mind, but wants to optimize the path in between. 
+
+For example, a user can set the start and end of a flight path so that the path crosses over an arching MCS with high vertical velocity. The optimal flight path is one that curves around the arch. See the example below. (a) shows the initial path, (b) shows the optimized path.
+
+![](./images/flight-planning-8.png)
+
 #### Training settings
 - [Desired Path Length (E1a)](./images/flight-planning-3.png) sets the desired path length (in hours) for the flight.
 - [Learning Rate(E1b)](./images/flight-planning-3.png) sets the learning rate. This is how quickly the algorithm reduces the number of random samples in the environment vs. the number of samples near high-quality paths. The default is `0.008`, which means the algorithm will spend the first $\frac{0.5}{0.008}\sim 63$ iterations learning the environment before only sampling points near high-quality legs. For complex environments, the learning rate should be lower than the default, but simpler environments may benefit from a higher learning rate.
