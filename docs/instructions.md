@@ -136,8 +136,9 @@ For example, a user can set the start and end of a flight path so that the path 
 - [Number of Parellel Paths (E1d)](./images/flight-planning-3.png) sets the number of new nodes to add to the network simultaneously. The nodes in a single parallel computation will not build on one another, just the pre-existing network. The default is `100`, which is sufficient for most environments.
 
 #### Running the program
-- [Set Start for flight (E2a)](./images/flight-planning-3.png) can be used to set the start point and direction of the aircraft. Click and drag on the map in the direction to start. The aircraft will start at the point where you first pressed the mouse button. In cases where you are continuing a path, the aircraft will start at the last waypoint in the preexisting path.
-- [Finalize Start/Reset (E2b)](./images/flight-planning-3.png) to finalize the start position. After this is pressed, the blue line will turn into a red arrow. You can always change the start position by pressing [Set Start for Flight (E2a)](./images/flight-planning-3.png) again. This button will also reset the network if you choose to restart the training.
+- [Set Start for flight (E2a)](./images/flight-planning-3.png) can be used to set the start point and direction of the aircraft. Click and drag on the map in the direction to start. The aircraft will start at the point where you first pressed the mouse button. In cases where you are continuing a path, the aircraft will start at the last waypoint in the preexisting path. 
+    - Note: you only need to do this in the "New" and "Continue" flight planning options. In the "Optimize" option, the start points will already be set.
+- [Finalize Start/Reset (E2b)](./images/flight-planning-3.png) to finalize the start position. After this is pressed, the blue line will turn into a red arrow. You can always change the start position by pressing [Set Start for Flight (E2a)](./images/flight-planning-3.png) again. This button will also reset the network if you choose to restart the training. **You must press this button before pressing [Begin Training (E2c)](./images/flight-planning-3.png) for all flight planning options.**
 - [Begin Training (E2c)](./images/flight-planning-3.png) to begin the training process. The program will run the algorithm for the number of iterations set in [E1c](./images/flight-planning-3.png). 
     - The program will update the map with the new path after every second iteration.
     - The network will condense (combine nearby nodes $<3$ km apart) every 10 iterations.
@@ -150,9 +151,10 @@ There are three main parts to the plotted network:
 - The orange network with blue nodes is the network of paths that the algorithm has built ([E3a](./images/flight-planning-3.png)). The size of the nodes is inversely proportional to the quality of the leg.
 - The red contours ([E3b](./images/flight-planning-3.png)) are the regions of high quality legs where the algorithm is more likely to sample points. These will shift throughout the training process as the network learns the environment.
 - The blue paths ([E3c](./images/flight-planning-3.png)) are the paths that the algorithm has deemed high quality. You can select a path by clicking on it, and the program will highlight the path in green. You may stop the training at any time and pick a path.
+
 #### Saving the path and exporting to the main GUI
 - After you have selected a path, press [Finalize Path (E4)](./images/flight-planning-3.png) to finalize the path and press [Done/Exit (E5)](./images/flight-planning-3.png) to export the path to the main GUI. These buttons will turn green when you can press them.
-    - Note: the path may dissapear after pressing 'Finalize Path'. This is normal, since the path object has been moved to a buffer before being moved to the main GUI.
+    - Note: the path may dissapear after pressing 'Finalize Path'. This is normal, since the path object has been moved to a buffer before being moved to the main GUI axes.
 - As before, you may edit this path manually or interactively by pressing [Edit path (C4)](./images/flight-planning-1.png) in the main GUI after exporting the path.
 
 ## Adding background motion to the flight planning/target acquisitions.
