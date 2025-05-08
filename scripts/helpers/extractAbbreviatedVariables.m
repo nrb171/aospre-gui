@@ -1,4 +1,4 @@
-app.FileList = dir('/Users/nbarron/work/AR-20211024/600m/');
+app.FileList = dir('/glade/u/home/nbarron/scratch/wrf/wrfv4.6.1/run/stitched/');
 
 app.FileList = app.FileList(~ismember({app.FileList.name},{'.','..'}));
 app.FileList = app.FileList(contains({app.FileList.name},'wrfout'));
@@ -14,7 +14,7 @@ if ~exist(abbreviatedFolder, 'dir')
 end
 
 %% create variable slice at 2 km
-for iFile = 1:numel(app.FileList)
+for iFile = 1:12:numel(app.FileList)
     nci = ncinfo([app.FileList(iFile).folder, '/', app.FileList(iFile).name]);
     allVarNames = string({nci.Variables.Name});
     for varName = [requiredVariables, variablesToKeep]
@@ -29,12 +29,12 @@ for iFile = 1:numel(app.FileList)
                 varDimCell{end+1} = varDimLength(iDim);
             else
                 varDimCell{end+1} = varDimNames(iDim);
-                varDimCell{end+1} = 1;
+                varDimCell{end+1} = 2;
             end
         end
         nccreate([abbreviatedFolder,app.FileList(iFile).name], varName, "Dimensions",varDimCell)
         if numel(varDimCell) == 8
-            ncwrite([abbreviatedFolder,app.FileList(iFile).name], varName, varData(:,:,28,:))
+            ncwrite([abbreviatedFolder,app.FileList(iFile).name], varName, varData(:,:,28:29,:))
         else
             ncwrite([abbreviatedFolder,app.FileList(iFile).name], varName, varData)
         end 
