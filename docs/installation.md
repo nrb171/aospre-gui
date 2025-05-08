@@ -20,7 +20,7 @@ AOSPRE-GUI is a graphical user interface for setting up simulations using the AO
 You can download the AOSPRE package from the [AOSPRE GitHub repository](https://github.com/NCAR/AOSPRE). Follow the installation instructions located here: [AOSPRE Installation](https://github.com/NCAR/AOSPRE/blob/main/docs/building.md).
 
 ## Python (Optional)
-There is a standalone Python script that can be used to rename WRF output files ([wrfoutToAOSPRE.py](../helpers/wrfoutToAOSPRE.py)). This is not necessary as there is a MATLAB function in the GUI that can perform the same action, but it is included as a template in case your simulation file does not follow the default wrfout naming conventions. 
+There is a standalone Python script that can be used to rename WRF output files ([wrfoutToAOSPRE.py](../scripts/helpers/wrfoutToAOSPRE.py)). This is not necessary as there is a MATLAB function in the GUI that can perform the same action, but it is included as a template in case your simulation file does not follow the default wrfout naming conventions. 
 
 Any version of Python 3 will be sufficient.
 
