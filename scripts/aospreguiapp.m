@@ -251,13 +251,18 @@ classdef aospreguiapp < matlab.apps.AppBase
             if isempty(app.xlat)
                 app.updateMessages('Loading XLAT... ', 'append')
                 app.xlat = app.loadVar('XLAT');
+               
                 ylim(app.UIAxes, [min(app.xlat(:))-0.5, max(app.xlat(:))+0.5])
-            end
-            if isempty(app.xlon)
+            
                 app.updateMessages('Loading XLONG... ', 'append')
                 app.xlon = app.loadVar('XLONG');
                 xlim(app.UIAxes, [min(app.xlon(:))-0.5, max(app.xlon(:))+0.5])
             
+                if all(app.xlat(:) == 0) || all(app.xlon(:) == 0)
+                    [xlonTemp, xlatTemp] = meshgrid(1:size(app.xlat,1), 1:size(app.xlat,2));
+                    app.xlat = xlatTemp;
+                    app.xlon = xlonTemp;
+                end
             end
 
             app.updateMessages('Redrawing figure... ')
@@ -575,10 +580,7 @@ classdef aospreguiapp < matlab.apps.AppBase
         
         function [row, col] = latlonTorowcol(app, lat, lon)
             % convert from latitude/longitude to simulation idx.
-            if isempty(app.xlat) | isempty(app.xlon)
-                app.xlat = app.loadVar('XLAT');
-                app.xlon = app.loadVar('XLONG');
-            end
+          
 
             [~,~,d,~] = latlonTodisaz(lat, lon, app.xlat, app.xlon);
             
@@ -587,11 +589,7 @@ classdef aospreguiapp < matlab.apps.AppBase
 
         function [lat, lon] = rowcolTolatlon(app,row, col)
             %convert from row/col in simulation space to lat/lon
-            if isempty(app.xlat) | isempty(app.xlon)
-                app.xlat = app.loadVar('XLAT');
-                app.xlon = app.loadVar('XLONG');
-            end
-
+           
             lat = app.xlat(round(row), round(col));
             lon = app.xlon(round(row), round(col));
         end
