@@ -337,7 +337,9 @@ classdef FlightPlanner < handle
             tab.cornerstone = zeros(size(row));                      
             
             % set cornerstone labels
-            
+            if isempty(obj.cornerstoneCoords)
+                obj.cornerstoneCoords = [-999, -999]
+            end
             [dist, ind] = pdist2(obj.cornerstoneCoords,[tab.row(:), tab.col(:)],  'euclidean', 'Smallest', 1);
             cornerstoneMask = dist < obj.searchLength/obj.Environment.resolution;
             tab.cornerstone = (ind.*cornerstoneMask)';
@@ -492,12 +494,14 @@ classdef FlightPlanner < handle
                 maskTemp = zeros(size(obj.Environment.w));
                 maskTemp(meanInds) = 1;     
                 maskTemp = double(maskTemp);
-                theGreatEqualizer = imfilter((maskTemp), double(fspecial('disk', round(2*obj.searchLength/obj.Environment.resolution))>0))>0;
+                theGreatEqualizer = imfilter((maskTemp), double(fspecial('disk', 25)>0))>0;
     
                 % apply a gaussian filter to the mask
                 obj.validMask = single(ones(size(obj.Environment.w)))*0.5;
                 
                 obj.validMask(~theGreatEqualizer) = 0.5-obj.TrainingOptions.learningRate*obj.loopNumber;
+                
+                obj.validMask(:) = 0.5-obj.TrainingOptions.learningRate*obj.loopNumber;
             
                 
                 if max(obj.validMask(:)) > 1
